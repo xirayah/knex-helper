@@ -1,0 +1,58 @@
+{
+  "name": "knex-hepler",
+  "version": "1.0.0",
+  "description": "Tool for automation of data processing for certain queries in Knex.js",
+  "main": "knexHelper",
+  "types": "types/index.d.ts",
+  "engines": {
+    "node": ">=12"
+  },
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "dependencies": {
+    "knex": "^3.0.1",
+    "qs": "^6.11.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.0",
+    "@types/qs": "^6.9.9",
+    "chai": "^4.3.6",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^10.0.0",
+    "oracledb": "^5.4.0",
+    "ts-node": "^10.9.1",
+    "typescript": "5.0.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/knex/knex.git"
+  },
+  "homepage": "https://knex.github.io/documentation/",
+  "keywords": [
+    "sql",
+    "query",
+    "postgresql",
+    "postgres",
+    "mysql",
+    "oracle",
+    "mssql",
+    "builder",
+    "querybuilder",
+    "build",
+    "db",
+    "database"
+  ],
+  "author": {
+    "name": "Xirayah"
+  },
+  "files": [
+    "knex-helper/*.mts",
+    "knex-helper/lib/*.mts",
+    ".gitignore",
+    "scripts/*",
+    "LICENSE",
+    "README.md"
+  ],
+  "license": "MIT"
+}
