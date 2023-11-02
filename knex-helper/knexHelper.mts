@@ -21,6 +21,7 @@ export class KnexHelper {
   private static booleanTrue: string
   private static booleanFalse: string
   private static editInserts?: Map<string, () => any>
+  private static timestampFormatterFunction: (date: string) => string
   private static DEBUG: boolean = true
 
   private constructor(cfg: helperConfig) {
@@ -56,6 +57,9 @@ export class KnexHelper {
     KnexHelper.booleanDataType = cfg.BOOLEAN_DATA_TYPE
     KnexHelper.booleanTrue = cfg.BOOLEAN_TRUE_VALUE
     KnexHelper.booleanFalse = cfg.BOOLEAN_FALSE_VALUE
+    if (cfg.TIMESTAMP_FORMATTER_FUNCTION !== undefined) {
+      KnexHelper.timestampFormatterFunction = cfg.TIMESTAMP_FORMATTER_FUNCTION
+    }
     if (cfg.DEBUG !== undefined) {
       KnexHelper.DEBUG = cfg.DEBUG
     }
@@ -712,7 +716,12 @@ export class KnexHelper {
     const newObj: genericObj = {}
     for (let i = 0; i < dateKeys.length; i++) {
       if (obj[dateKeys[i]] !== undefined && obj[dateKeys[i]] !== null) {
-        const formattedDate = this.timestampFormatter(obj[dateKeys[i]])
+        let formattedDate: string = ''
+        if (KnexHelper.timestampFormatterFunction !== undefined) {
+          formattedDate = KnexHelper.timestampFormatterFunction(obj[dateKeys[i]])
+        } else {
+          formattedDate = this.timestampFormatter(obj[dateKeys[i]])
+        }
         newObj[dateKeys[i]] = KnexHelper.db.raw(formattedDate)
       }
     }

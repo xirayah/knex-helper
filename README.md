@@ -73,4 +73,6 @@ In such case the KnexHelper would be configured as follows
 
 ```
 
+**TIMESTAMP_FORMATTER_FUNCTION** (Optional) - User can provide his own function that will be used to format the dates with time before they reach database for query execution. Knex Helper has it's own built in timestamp formatter function but it's currently skewed in favour of oracledb. When a function is provided in the config it will replace the one that is built in.
+
 **DEBUG** (Optional) - KnexHelper will print additional info to the console when set to `true`

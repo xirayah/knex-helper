@@ -52,3 +52,14 @@ export const timestampFormatterConfig: timestampFormat = {
 }
 
 export const allowedClients = ['oracledb', 'mysql2']
+
+export const EQ = 'eq'
+export const GT = 'gt'
+export const LT = 'lt'
+export const AND = 'and'
+export const OR = 'or'
+export const INQ = 'inq'
+export const NIN = 'nin'
+export const BETWEEN = 'between'
+export const BASIC_OPERATORS = [EQ, GT, LT]
+export const OPERATORS = [AND, OR, BETWEEN].concat(BASIC_OPERATORS)

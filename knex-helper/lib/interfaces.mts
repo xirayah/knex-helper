@@ -1,5 +1,5 @@
 import { Knex } from 'knex'
-import { dbClients } from './types.mjs'
+import { dbClients, genericObj } from './types.mjs'
 
 export interface timestampFormat {
   PARSE_MONTH: boolean
@@ -89,6 +89,7 @@ export interface helperConfig {
   AUTO_INSERTS?: {
     EDIT_ITEM?: Map<string, any>
   }
+  TIMESTAMP_FORMATTER_FUNCTION?: (date: string) => string
   DEBUG?: boolean
 }
 
@@ -100,4 +101,24 @@ export interface columnsInfo {
 
 export interface tableName {
   TABLE_NAME: string
+}
+type operators = 'eq' | 'and' | 'or' | 'gt' | 'lt' | 'between' | 'inq' | 'nin'
+
+type whereObj = {
+  [key: string]: {
+    [op in operators]?: string | number | number[] | string[]
+  }
+}
+
+type eqObj = {
+  [key: string]: string
+}
+
+export interface filterQueryObject {
+  fields?: genericObj // { fields: {id: true, make: true, model: true} }
+  include?: any
+  limit?: number
+  order?: string[]
+  skip?: any
+  where?: whereObj | eqObj // {"where":{"BUILDING_ID":"154"}}
 }
