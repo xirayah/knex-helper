@@ -3,12 +3,12 @@ import { comparatorsMap, comparators } from './lib/comparators.mjs'
 import { customQueryObject } from './lib/interfaces.mjs'
 import qs from 'qs'
 import { dateForComparison } from './lib/util.mjs'
-import { LIMIT, MAX, MIN, ORDER, QUERY_STARTERS, SELECT, VALID_QUERY_KEYS, WHERE_BETWEEN, WHERE_IN_KEYS, WHERE_KEYS, WHERE_NOT_BETWEEN } from './lib/query.mjs'
+import { ARRAY_KEYS, LIMIT, MAX, MIN, ORDER, SELECT, VALID_QUERY_KEYS, WHERE_BETWEEN, WHERE_IN_KEYS, WHERE_KEYS, WHERE_NOT_BETWEEN } from './lib/query.mjs'
 import model from './knexHelper.mjs'
 import { tableInfo } from './lib/interfaces.mjs'
+import db from './dbConfig.mjs'
 
-const db = model().knex() // EXPOSING KNEX INSTANCE THROUGH HELPER
-const DEBUG = model().debug()
+const DEBUG = false
 
 /**
  * This function compiles query object into a custom GET database query using knex query builder.
@@ -22,6 +22,10 @@ const DEBUG = model().debug()
  * @returns Array with query results or an error string
  */
 export async function customQueryBuilder(tableName: string, tableConfig: tableInfo, customQuery: customQueryObject): Promise<any[] | string> {
+  if (DEBUG) {
+    console.log('customQueryObject')
+    console.log(customQuery)
+  }
   // Validating query before initializing query builder
   const validatedQuery = queryValidator(customQuery)
   if (typeof validatedQuery === 'string') {
@@ -113,7 +117,7 @@ export async function customQueryBuilder(tableName: string, tableConfig: tableIn
   // 3. OR WHERE
   if (query.OR_WHERE !== undefined) {
     for (let i = 0; i < query.OR_WHERE.length; i++) {
-      if (DEBUG) { console.log('Adding OR WHERE to query chain') }
+      if (DEBUG) { console.log('Adding OR WHERE to query chain')}
       queryObj = queryObj.orWhere(
         query.OR_WHERE[i].COLUMN,
         getComparator(query.OR_WHERE[i].COMPARATOR),
@@ -155,20 +159,6 @@ export async function customQueryBuilder(tableName: string, tableConfig: tableIn
  */
 export function queryValidator(queryBody: customQueryObject): string | customQueryObject {
   const query = queryBody
-  // I am not happy with this ridiculously long "if statement" but I have not came up with a better way to code it YET
-  if (
-    query.WHERE === undefined &&
-    query.WHERE_IN === undefined &&
-    query.WHERE_NOT === undefined &&
-    query.WHERE_NOT_IN === undefined &&
-    query.WHERE_BETWEEN === undefined &&
-    query.WHERE_NOT_BETWEEN === undefined &&
-    query.WHERE_LIKE === undefined &&
-    query.MIN === undefined &&
-    query.MAX === undefined
-  ) {
-    return `Incorrect Query Structure: All query starters ${QUERY_STARTERS} are undefined`
-  }
   for (const [key, value] of Object.entries(query)) {
     // Checking if keywords adhere to allowed values
     if (!VALID_QUERY_KEYS.includes(key)) {
@@ -181,6 +171,12 @@ export function queryValidator(queryBody: customQueryObject): string | customQue
     }
     if (key === SELECT || key === MIN || key === MAX) {
       continue
+    }
+    if (Array.isArray(value.COLUMN)) {
+      return `Invalid array structure detected for keyword ${key}. Make sure to position the array index [i] immiediately after the keyword. Eg. OR_WHERE[0][COLUMN] not OR_WHERE[COLUMN][0]`
+    }
+    if (ARRAY_KEYS.includes(key) && !Array.isArray(value)) {
+      return `Invalid array structure detected for keyword ${key}. Make sure to add array index [i] between keywords. Eg. ${key}[0][COLUMN]=...&${key}[0][VALUE]=...`
     }
     if (WHERE_KEYS.includes(key)) {
       if (value.length !== undefined) {
@@ -223,14 +219,22 @@ export function queryValidator(queryBody: customQueryObject): string | customQue
       }
     }
     if (key === LIMIT) {
-      if (typeof value !== 'number') {
+      if (typeof value === 'string') {
+        const parsed = parseInt(value)
+        if (isNaN(parsed)) {
+          return 'LIMIT must be a number'
+        }
+        query.LIMIT = parsed
+      } else if (typeof value !== 'number') {
         return 'LIMIT must be a number'
       }
     }
     if (key === ORDER) {
-      const validated = validOrder(value)
-      if (typeof validated === 'string') {
-        return `Incorrect ORDER body detected. Error: ${validated}`
+      for (let i = 0; i < value.length; i++) {
+        const validated = validOrder(value[i])
+        if (typeof validated === 'string') {
+          return `Incorrect ORDER body detected. Error: ${validated}`
+        }
       }
     }
   }
@@ -239,10 +243,13 @@ export function queryValidator(queryBody: customQueryObject): string | customQue
 
 function validOrder(object: any): string | any {
   const order = object
-  if (order.column === undefined || order.column.length === 0) {
+  if (order.column === undefined) {
     return 'column is undefined'
   }
-  if (order.order !== undefined && (order.order !== 'asc' || order.order !== 'desc')) {
+  if (order.order === undefined) {
+    return 'order is undefined'
+  }
+  if (order.order !== 'asc' && order.order !== 'desc') {
     return 'order value shoud be asc or desc'
   }
   return order

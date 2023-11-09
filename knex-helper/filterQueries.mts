@@ -4,7 +4,7 @@ import { customQueryObject, orderBody, whereBody, filterQueryObject, whereInBody
 import { AND, BASIC_OPERATORS, BETWEEN, INQ, NIN, OPERATORS, OR } from './lib/constants.mjs'
 
 const REGEX_FILTER = /\?filter=/
-export function extractFilterFromURL(url?: string): string | undefined {
+export function extractFilterFromURL(url?: string): filterQueryObject | undefined {
   if (url === undefined) {
     return undefined
   }
@@ -20,10 +20,18 @@ export function extractFilterFromURL(url?: string): string | undefined {
   const queryWithQuotes = filterQuery.replace(/%22/g, `\"`)
   // Placing spaces
   const queryWithSpaces = queryWithQuotes.replace(/%20/g, ' ')
+  // Placing =
+  const queryWithEq = queryWithSpaces.replace(/%3D/g, '=')
+  // Placing {
+  const queryWithOCB = queryWithEq.replace(/%7B/g, '{')
+  // Placing :
+  const queryWithColons = queryWithOCB.replace(/%3A/g, ':')
+  // Placing }
+  const queryWithCCB = queryWithColons.replace(/%7D/g, '}')
   console.log('AFTER')
-  console.log(queryWithSpaces)
-  // Replacing %22 with quotation marks leaves us with a stringified JSON
-  return queryWithSpaces
+  console.log(queryWithCCB)
+  // Replacing all special symbols leaves us with a stringified JSON
+  return JSON.parse(queryWithCCB)
 }
 
 export function convertFilterToCustomQuery(query: filterQueryObject): customQueryObject {

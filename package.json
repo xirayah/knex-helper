@@ -1,6 +1,6 @@
 {
   "name": "knex-hepler",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Tool for automation of data processing for certain queries in Knex.js",
   "main": "knexHelper",
   "type": "module",
@@ -10,7 +10,8 @@
   },
   "scripts": {
     "build": "npx tsc",
-    "test:filter": "mocha ./dist/test/filter.mjs"
+    "test:filter": "mocha ./dist/test/filter.mjs",
+    "test:custom": "mocha ./dist/test/customQuery.mjs"
   },
   "dependencies": {
     "knex": "^3.0.1",

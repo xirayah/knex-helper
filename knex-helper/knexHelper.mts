@@ -4,11 +4,14 @@ import { dbClients, genericObj } from './lib/types.mjs'
 import { columnsInfo, helperConfig, idType, tableInfo, tableName, tablesConfig } from './lib/interfaces.mjs'
 import { ERR_CANNOT_ADD_ITEM, ERR_CANNOT_DELETE_ITEM, ERR_CANNOT_EDIT_ITEM, ERR_CANNOT_GET_ITEM, ERR_CANNOT_GET_LIST, MYSQL_BUFFER_TYPE, MYSQL_DATETIME_TYPE, MYSQL_NUMBER_TYPE, NUMBER, ORACLE_BUFFER_TYPE, ORACLE_NUMBER_TYPE, ORACLE_TIMESTAMP_TYPE, STRING, allowedClients, monthsMap, timestampFormatterConfig } from './lib/constants.mjs'
 import { customQueryBuilder, requestUrlToQueryBody } from './customQuery.mjs'
+import { convertFilterToCustomQuery, extractFilterFromURL } from './filterQueries.mjs'
+import * as url from 'url'
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
 export class KnexHelper {
   private static instance: KnexHelper
-  private static folderPath: string = 'src/database/'
-  private static configFilename: string = 'tablesConfig'
+  private static folderPath: string = __dirname
+  private static configFilename: string = '/tablesConfig'
   private static configFilePath = this.folderPath + this.configFilename + '.json'
   private static db: Knex
   private static dbName: string
@@ -98,8 +101,12 @@ export class KnexHelper {
   public async getList(tableName: string, requestUrl?: string): Promise<any[]> {
     const tableConfig = await this.getTableInfo(tableName)
     let list: string | genericObj[] = []
+    const filterQuery = extractFilterFromURL(requestUrl)
     const queryBody = requestUrlToQueryBody(requestUrl)
-    if (queryBody !== undefined) {
+    if (filterQuery !== undefined) {
+      const customQuery = convertFilterToCustomQuery(filterQuery)
+      list = await customQueryBuilder(tableName, tableConfig, customQuery)
+    } else if (queryBody !== undefined) {
       list = await customQueryBuilder(tableName, tableConfig, queryBody)
     } else {
       list = await this.getListQuery(tableName)
