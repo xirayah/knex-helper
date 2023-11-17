@@ -1,6 +1,6 @@
 {
   "name": "knex-hepler",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Tool for automation of data processing for certain queries in Knex.js",
   "main": "knexHelper",
   "type": "module",

@@ -6,13 +6,14 @@ import { ERR_CANNOT_ADD_ITEM, ERR_CANNOT_DELETE_ITEM, ERR_CANNOT_EDIT_ITEM, ERR_
 import { customQueryBuilder, requestUrlToQueryBody } from './customQuery.mjs'
 import { convertFilterToCustomQuery, extractFilterFromURL } from './filterQueries.mjs'
 import * as url from 'url'
+import { timestampFormatter } from './lib/util.mjs'
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
 export class KnexHelper {
   private static instance: KnexHelper
   private static folderPath: string = __dirname
-  private static configFilename: string = '/tablesConfig'
-  private static configFilePath = this.folderPath + this.configFilename + '.json'
+  private static configFilename: string = 'tablesConfig'
+  private static configFilePath: string
   private static db: Knex
   private static dbName: string
   private static dbClient: dbClients
@@ -31,6 +32,7 @@ export class KnexHelper {
     if (cfg.CONFIG_FOLDER_PATH !== undefined) {
       KnexHelper.folderPath = cfg.CONFIG_FOLDER_PATH
     }
+    KnexHelper.configFilePath = KnexHelper.folderPath + KnexHelper.configFilename + '.json'
     // Create config folder
     if (!existsSync(KnexHelper.folderPath)) {
       mkdirSync(KnexHelper.folderPath)
@@ -727,42 +729,13 @@ export class KnexHelper {
         if (KnexHelper.timestampFormatterFunction !== undefined) {
           formattedDate = KnexHelper.timestampFormatterFunction(obj[dateKeys[i]])
         } else {
-          formattedDate = this.timestampFormatter(obj[dateKeys[i]])
+          formattedDate = timestampFormatter(obj[dateKeys[i]])
         }
         newObj[dateKeys[i]] = KnexHelper.db.raw(formattedDate)
       }
     }
     const finalObj = { ...obj, ...newObj }
     return finalObj
-  }
-
-  /**
- * This function converts dates to a timestamp format
- * that can be used by the oracle database.
- * Months are currently converted from numeric to 3 letter representation.
- * REMEMBER to wrap any timestamp inserts with db.raw(dateHere)
- * @param date In format of a new Date().toJSON() (YYYY-MM-DDTHH:MM:SS.SSSZ)
- * @returns Correctly formatted date for the database
- */
-  private timestampFormatter(date: string): string {
-    const { PARSE_MONTH, YEAR_START_INDEX, YEAR_END_INDEX, MONTH_START_INDEX, MONTH_END_INDEX, DAY_START_INDEX, DAY_END_INDEX, HOUR_START_INDEX, HOUR_END_INDEX, MINUTES_START_INDEX, MINUTES_END_INDEX, SECONDS_START_INDEX, SECONDS_END_INDEX } = timestampFormatterConfig
-    const year = date.slice(YEAR_START_INDEX, YEAR_END_INDEX)
-    let month = date.slice(MONTH_START_INDEX, MONTH_END_INDEX)
-    if (PARSE_MONTH === true) {
-      month = monthsMap.get(month)
-    }
-    const day = date.slice(DAY_START_INDEX, DAY_END_INDEX)
-    const hour = date.slice(HOUR_START_INDEX, HOUR_END_INDEX)
-    const minutes = date.slice(MINUTES_START_INDEX, MINUTES_END_INDEX)
-    const seconds = date.slice(SECONDS_START_INDEX, SECONDS_END_INDEX)
-    const formattedDate = day + '-' + month + '-' + year + ' ' + hour + ':' + minutes + ':' + seconds
-    if (KnexHelper.dbClient !== 'oracledb') {
-      return formattedDate
-    }
-    const timestampPrefix = "to_timestamp('"
-    const timestampSuffix = "','DD-MON-RR HH24.MI.SSXFF')"
-    const readyForInsertDate = timestampPrefix + formattedDate + timestampSuffix
-    return readyForInsertDate
   }
 
   /**
